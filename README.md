@@ -10,3 +10,6 @@ Simple behavioral task training mouse to run on a wheel to receive rewards. In a
 * 50-100 Ohm resister
 * Transistor, RF840 or BC377 or whatever
 * Piezo speaker
+
+## Circuit diagram
+![Circuit diagram](mouse-wheel-circuit.svg)
