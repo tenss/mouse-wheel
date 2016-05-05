@@ -41,14 +41,16 @@ void doEncoder() {
 
 void loop() {
   if (encoderPos >= targetPos) {
+    // Disable interrupts in case one occurs while are writing...
+    detachInterrupt(digitalPinToInterrupt(encoderA));
+    
     digitalWrite (valvePin, HIGH);
     delay(valveTime);
     digitalWrite (valvePin, LOW);
     encoderPos = 0;
-    // Disable interrupts in case one occurs while are writing...
-    noInterrupts();
     tonePeriod = 50;
-    interrupts();
+    
+    attachInterrupt(digitalPinToInterrupt(encoderA), doEncoder, CHANGE);
   }
   // ...or reading
   noInterrupts();
