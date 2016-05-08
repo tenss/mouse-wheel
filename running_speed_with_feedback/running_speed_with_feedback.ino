@@ -19,9 +19,9 @@ int lastPos = 0;    // encoder position at last iteration of the speed loop
 int lastSpeed = 0;  // last measured speed
 int goodSpeed = 0;  // number of recent iterations when speed fell within range
 int speedMismatch;  // difference between current and target speed
-#define goodSpeedTarget 10  // value for goodSpeed to reach for reward
-#define minSpeed 200 // minimum target speed
-#define maxSpeed 400 // maximum target speed
+#define goodSpeedTarget 5  // value for goodSpeed to reach for reward
+#define minSpeed 50 // minimum target speed
+#define maxSpeed 500 // maximum target speed
 
 void setup() {
   // setup timer1 to overflow after 100 ms
@@ -58,8 +58,9 @@ ISR(TIMER1_OVF_vect)        // interrupt service routine
     speedMismatch = max(lastSpeed - maxSpeed, minSpeed - lastSpeed);
     goodSpeed = 0;
   }
-
-  Serial.println(speedMismatch, DEC);
+  Serial.print(millis(), DEC);
+  Serial.print(' ');
+  Serial.println(lastSpeed, DEC);
   toneFreq = max((minSpeed - speedMismatch)*100 / minSpeed, 0) + 10;
   tonePeriod = 1000 / (toneFreq * 2);
 }
@@ -78,7 +79,8 @@ void loop() {
   if (goodSpeed >= goodSpeedTarget) {
     // Disable interrupts in case one occurs while are writing...
     detachInterrupt(digitalPinToInterrupt(encoderA));
-    
+    Serial.print(millis(), DEC);
+    Serial.println(" R");
     digitalWrite (valvePin, HIGH);
     delay(valveTime);
     digitalWrite (valvePin, LOW);
