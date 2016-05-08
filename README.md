@@ -12,4 +12,4 @@ Simple behavioral task training mouse to run on a wheel to receive rewards. In a
 * Piezo speaker
 
 ## Circuit diagram
-![Circuit diagram](mouse-wheel-circuit.svg)
+![Circuit diagram](http://tenss.github.io/mouse-wheel/mouse-wheel-circuit.svg)
