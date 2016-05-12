@@ -5,7 +5,7 @@ int encoderPos = 0;
 
 // Solenoid valve pin and opening time
 #define valvePin 8
-int valveTime = 250;
+int valveTime = 150;
 
 // Auditory feedback parameters
 #define speakerPin 12 // auditory feedback pin
@@ -15,13 +15,12 @@ int tonePeriod_;
 
 // Speed measurement
 int timer1_counter; // timer for polling elapsed time
-int lastPos = 0;    // encoder position at last iteration of the speed loop 
 int lastSpeed = 0;  // last measured speed
 int goodSpeed = 0;  // number of recent iterations when speed fell within range
 int speedMismatch;  // difference between current and target speed
-#define goodSpeedTarget 5  // value for goodSpeed to reach for reward
-#define minSpeed 50 // minimum target speed
-#define maxSpeed 500 // maximum target speed
+#define goodSpeedTarget 10  // value for goodSpeed to reach for reward
+#define minSpeed 100 // minimum target speed
+#define maxSpeed 130 // maximum target speed
 
 void setup() {
   // setup timer1 to overflow after 100 ms
@@ -32,7 +31,9 @@ void setup() {
   timer1_counter = 59286;   // preload timer 65536-16MHz/256/10Hz
   
   TCNT1 = timer1_counter;   // preload timer
+  // This sets CS12 bit to 1
   TCCR1B |= (1 << CS12);    // 256 prescaler 
+  // Sets Time Overflow Interrupt Enable bit to 1
   TIMSK1 |= (1 << TOIE1);   // enable timer overflow interrupt
   interrupts();  
   
@@ -49,8 +50,8 @@ void setup() {
 ISR(TIMER1_OVF_vect)        // interrupt service routine 
 {
   TCNT1 = timer1_counter;   // preload timer
-  lastSpeed = encoderPos - lastPos;
-  lastPos = encoderPos;
+  lastSpeed = encoderPos;
+  encoderPos = 0;
   if ((lastSpeed >= minSpeed) && (lastSpeed <= maxSpeed)) {
     goodSpeed++;
     speedMismatch = 0;
@@ -78,18 +79,16 @@ void doEncoder() {
 void loop() {
   if (goodSpeed >= goodSpeedTarget) {
     // Disable interrupts in case one occurs while are writing...
-    detachInterrupt(digitalPinToInterrupt(encoderA));
+    //detachInterrupt(digitalPinToInterrupt(encoderA));
     Serial.print(millis(), DEC);
     Serial.println(" R");
     digitalWrite (valvePin, HIGH);
     delay(valveTime);
     digitalWrite (valvePin, LOW);
-    lastPos = 0;
-    encoderPos = 0;
     tonePeriod = 50;
     goodSpeed = 0;
     
-    attachInterrupt(digitalPinToInterrupt(encoderA), doEncoder, CHANGE);
+    //attachInterrupt(digitalPinToInterrupt(encoderA), doEncoder, CHANGE);
   }
   // ...or reading
   noInterrupts();
