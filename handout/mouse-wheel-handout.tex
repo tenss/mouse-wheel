@@ -1,0 +1,156 @@
+%\documentclass[a4paper,10pt]{article}
+\documentclass[a4paper,10pt]{article}
+\usepackage[margin=1.5in]{geometry}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{color}
+\usepackage[utf8]{inputenc}
+\lstdefinestyle{customc}{
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  frame=L,
+  xleftmargin=\parindent,
+  language=C,
+  showstringspaces=false,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\bfseries\color{green},
+  commentstyle=\itshape\color{black},
+  identifierstyle=\color{blue},
+  stringstyle=\color{red},
+}
+\lstset{escapechar=@,style=customc}
+\title{Mouse running task}
+\author{}
+\date{}
+
+\pdfinfo{%
+  /Title    ()
+  /Author   ()
+  /Creator  ()
+  /Producer ()
+  /Subject  ()
+  /Keywords ()
+}
+
+\begin{document}
+\maketitle
+\section{Behavioral task}
+You will setup a behavioral task with a head-fixed mouse. The mouse will run on a styrofoam wheel, 
+while you acquire his running speed / position with a rotary encoder, reward him (with water) for 
+reaching a target speed and deliver auditory feedback. The behavior will be controlled entirely
+by an Arduino microcontroller. MATLAB will be used only to record the data.
+
+You will have to decide on a range of speeds to reward. Perhaps it's best to start with a wide range
+and narrow it down as the mouse becomes comfortable with the task. To measure running, you will be using a rotary encoder
+ (more on that later), which produces 1000 clicks per revolution. One revolution of the wheel per second 
+ is pretty pretty fast running speed and that can be the eventual goal to aim for. You will also 
+ have to pick a minimum time, for which the mouse has to maintain target speed to receive reward, 
+and a transfer function to convert running speed into auditory feedback frequency.
+
+\subsection{Behavior II: Implementation day}
+\begin{itemize}
+ \item Setup running wheel, rotary encoder, piezo buzzer and valve
+ \item Make the circuit for controlling piezo and valve with arduino
+ \item Write arduino code to track speed and deliver reward and feedback
+ \item Write MATLAB code to acquirespeed signals and reward timestamps sent over serial port
+ and plot them in real time
+\end{itemize}
+
+\subsection{Behavior III: Behavioral session}
+\begin{itemize}
+ \item Train a mouse to reach a target position by running on the wheel - auditory feedback based on how similar
+ current speed is to target
+ \item Gradually narrow down the target speed window and increase time mouse has to maintain it
+\end{itemize}
+\pagebreak
+\section{Rotary encoders}
+\begin{figure}[here]
+\includegraphics[width=0.9\textwidth]{encoder.png}
+\caption{Rotary encoder waveform}
+\end{figure}
+
+You will use a rotary encoder to read out the rotation of the wheel. It is a quadrature encoder has 
+two output lines, which turn on and off as the shaft rotates. Depending on the direction
+of rotation, one or the other line will flip on first (see figure). 
+
+To read the encoder you will need to use the following lines:
+
+\begin{description}[align=right]
+\item [BROWN] 5V power
+\item [WHITE] GND
+\item [GRAY] Line A
+\item [GREEN] Line B
+\end{description}
+
+The encoders you are using produce 1000 pulses per revolution and are best read out by attaching
+an interrupt to one of the output lines. Note that not all digital lines can be used to trigger
+interrupts.	
+
+\begin{lstlisting}
+attachInterrupt(digitalPinToInterrupt(INPUTPIN), encoderFunc, CHANGE);
+\end{lstlisting}
+
+\section{Timers}
+Timers are the Arduino way of making sure that code (such as to playing a cycle of a sound 
+waveform or measuring animal running speed) gets executed at specific moments in time (duh!).
+They are configured in a somewhat arcane way using the timer registers. Arduino Uno has 3 timers,
+some of which are used by built-in Arduino routines.
+
+\begin{description}[align=right]
+\item [Timer0] 8 bit, used by delay(), millis() and micros(s)
+\item [Timer1] 16 bit
+\item [Timer2] 8 bit, used by tone()
+\end{description}
+
+Two common ways to 
+use them is with compare match and overflow interrupts. The former triggers when the timer
+reaches a pre-defined value, while the latter when it overflows 255 (for an 8 bit timer) or 
+65536 (16 bit). The overflow interrupt can be used to trigger events at specific intervals
+by pre-setting the timer value (see example below).
+
+\begin{lstlisting}
+void setup() {
+  noInterrupts();           // disable all interrupts
+  // clear timer1 control registers
+  TCCR1A = 0;
+  TCCR1B = 0;
+  // this sets CS12 bit of the control register to 1
+  TCCR1B |= (1 << CS12);    // 256 prescaler 
+  // set timer value to overflow at 100 Hz
+  TCNT1 = 64911;   // 65536-16MHz/256/100
+  // set Time Overflow Interrupt Enable bit to 1
+  TIMSK1 |= (1 << TOIE1);   // enable timer overflow interrupt
+  interrupts();  
+}
+
+ISR(TIMER1_OVF_vect)        // interrupt service routine 
+{
+  TCNT1 = 64911;  // reset the timer
+  // do stuff here
+}
+\end{lstlisting}
+
+CS12 and TOIE1 are keywords that store the position of the relevant bits in the 
+in the timer control registers. You can find their full description online. We use 
+the bitwise OR operator |= and bit-shift operator << to turn on specific bits in 
+the register.
+
+\section{Serial communication}
+You will save and analyze running speed data acquired by the Arduino in MATLAB.
+The following code sample configures a serial object to read Arduino
+output.
+
+\begin{lstlisting}[language=matlab]
+ % initialize serial communication
+s = serial('COM6');
+set(s,'BaudRate', 9600);
+set(s,'DataBits', 8);
+set(s,'StopBits', 1);
+fopen(s);
+s.ReadAsyncMode = 'continuous';
+readasync(s);
+\end{lstlisting}
+
+You can then read from the serial port as you would from a file.
+\end{document}
