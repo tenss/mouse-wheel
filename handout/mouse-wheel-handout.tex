@@ -9,7 +9,6 @@
 \lstdefinestyle{customc}{
   belowcaptionskip=1\baselineskip,
   breaklines=true,
-  frame=L,
   xleftmargin=\parindent,
   language=C,
   showstringspaces=false,
@@ -36,10 +35,10 @@
 \begin{document}
 \maketitle
 \section{Behavioral task}
-You will setup a behavioral task with a head-fixed mouse. The mouse will run on a styrofoam wheel, 
-while you acquire his running speed / position with a rotary encoder, reward him (with water) for 
+You will setup a simple behavioral task with a head-fixed mouse. The mouse will run on a styrofoam wheel, 
+while you acquire his running speed / position with a rotary encoder, reward him with water using a valve for 
 reaching a target speed and deliver auditory feedback. The behavior will be controlled entirely
-by an Arduino microcontroller. MATLAB will be used only to record the data.
+by an Arduino microcontroller. MATLAB will be used only to record and display the data.
 
 You will have to decide on a range of speeds to reward. Perhaps it's best to start with a wide range
 and narrow it down as the mouse becomes comfortable with the task. To measure running, you will be using a rotary encoder
@@ -85,7 +84,8 @@ To read the encoder you will need to use the following lines:
 
 The encoders you are using produce 1000 pulses per revolution and are best read out by attaching
 an interrupt to one of the output lines. Note that not all digital lines can be used to trigger
-interrupts.	
+interrupts. The line below will add an interrupt to pin number INPUTPIN that will trigger
+when that pin goes on or off.
 
 \begin{lstlisting}
 attachInterrupt(digitalPinToInterrupt(INPUTPIN), encoderFunc, CHANGE);
@@ -98,9 +98,9 @@ They are configured in a somewhat arcane way using the timer registers. Arduino 
 some of which are used by built-in Arduino routines.
 
 \begin{description}[align=right]
-\item [Timer0] 8 bit, used by delay(), millis() and micros(s)
+\item [Timer0] 8 bit, used by \textit{delay()}, \textit{millis()} and \textit{micros(s)}
 \item [Timer1] 16 bit
-\item [Timer2] 8 bit, used by tone()
+\item [Timer2] 8 bit, used by \textit{tone()}
 \end{description}
 
 Two common ways to 
@@ -131,7 +131,7 @@ ISR(TIMER1_OVF_vect)        // interrupt service routine
 }
 \end{lstlisting}
 
-CS12 and TOIE1 are keywords that store the position of the relevant bits in the 
+\textbf{CS12} and \textbf{TOIE1} are keywords that store the position of the relevant bits in the 
 in the timer control registers. You can find their full description online. We use 
 the bitwise OR operator |= and bit-shift operator << to turn on specific bits in 
 the register.
