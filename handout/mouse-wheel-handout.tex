@@ -42,25 +42,36 @@ by an Arduino microcontroller. MATLAB will be used only to record and display th
 
 You will have to decide on a range of speeds to reward. Perhaps it's best to start with a wide range
 and narrow it down as the mouse becomes comfortable with the task. To measure running, you will be using a rotary encoder
- (more on that later), which produces 1000 clicks per revolution. One revolution of the wheel per second 
- is pretty pretty fast running speed and that can be the eventual goal to aim for. You will also 
+ (more on that later), which produces 1000 clicks per revolution. You will also 
  have to pick a minimum time, for which the mouse has to maintain target speed to receive reward, 
-and a transfer function to convert running speed into auditory feedback frequency.
+and implement a transfer function to convert running speed into auditory feedback frequency. 
+Frequency will start at 10 Hz and ramp up to 100 Hz when the mouse reaches target speed.
 
-\subsection{Behavior II: Implementation day}
+It is not trivial to determine what constitutes ``chance'' performance on this task. In addition, the animals
+may solve it as a purely motor task by memorizing the target speed range or by using the auditory feedback.
+Think about what kind of manipulations you could do to distinguish these strategies.
+
+Some tips of building the setup and writing code:
 \begin{itemize}
- \item Setup running wheel, rotary encoder, piezo buzzer and valve
- \item Make the circuit for controlling piezo and valve with arduino
- \item Write arduino code to track speed and deliver reward and feedback
- \item Write MATLAB code to acquirespeed signals and reward timestamps sent over serial port
- and plot them in real time
+ \item The valve is designed to operate at 12 V and will not work when driven directly from the Arduino. 
+ Use a DC power supply and gate it with a transistor.
+ \item Use a diode in parallel with the valve to protect the transistor from flyback voltage.
+ \item Use \textit{drawnow} to force MATLAB to update graphical displays while acquiring data.
 \end{itemize}
 
-\subsection{Behavior III: Behavioral session}
+\subsection{Implementation}
 \begin{itemize}
- \item Train a mouse to reach a target position by running on the wheel - auditory feedback based on how similar
- current speed is to target
- \item Gradually narrow down the target speed window and increase time mouse has to maintain it
+ \item Set up running wheel, rotary encoder, piezo buzzer and valve.
+ \item Make the circuit for controlling piezo and valve with arduino.
+ \item Write arduino code to track speed and deliver reward and feedback.
+ \item Write MATLAB code to acquire speed signals and reward timestamps sent over serial port
+ and plot them in real time.
+\end{itemize}
+
+\subsection{Behavioral session}
+\begin{itemize}
+ \item With the mouse on hte wheel, gradually increase target speed and monitor reward rate.
+ \item Try to vary the target speed and see if the mouse can use auditory feedback to control its running.
 \end{itemize}
 \pagebreak
 \section{Rotary encoders}
