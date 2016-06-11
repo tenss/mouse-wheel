@@ -18,17 +18,20 @@ int timer1_counter; // timer for polling elapsed time
 int lastSpeed = 0;  // last measured speed
 int goodSpeed = 0;  // number of recent iterations when speed fell within range
 int speedMismatch;  // difference between current and target speed
-#define goodSpeedTarget 10  // value for goodSpeed to reach for reward
-#define minSpeed 100 // minimum target speed
-#define maxSpeed 130 // maximum target speed
+#define goodSpeedTarget 5  // value for goodSpeed to reach for reward
+int minSpeed = 30; // minimum target speed
+int maxSpeed = 700; // maximum target speed
+int midSpeed = (minSpeed + maxSpeed) / 2;
+int clickDuration = 1;
+int interClickTime = 99;
 
 void setup() {
   // setup timer1 to overflow after 100 ms
   noInterrupts();           // disable all interrupts
   TCCR1A = 0;
   TCCR1B = 0;
-  // hard coded to overflow at 10 Hz
-  timer1_counter = 59286;   // preload timer 65536-16MHz/256/10Hz
+  // hard coded to overflow at 5 Hz
+  timer1_counter = 53036;   // preload timer 65536-16MHz/256/10Hz
   
   TCNT1 = timer1_counter;   // preload timer
   // This sets CS12 bit to 1
@@ -62,8 +65,8 @@ ISR(TIMER1_OVF_vect)        // interrupt service routine
   Serial.print(millis(), DEC);
   Serial.print(' ');
   Serial.println(lastSpeed, DEC);
-  toneFreq = max((minSpeed - speedMismatch)*100 / minSpeed, 0) + 10;
-  tonePeriod = 1000 / (toneFreq * 2);
+  toneFreq = max((minSpeed - speedMismatch)*90 / minSpeed, 0) + 10;
+  interClickTime = (1000 / toneFreq) - clickDuration;
 }
 
 void doEncoder() {
@@ -78,26 +81,18 @@ void doEncoder() {
 
 void loop() {
   if (goodSpeed >= goodSpeedTarget) {
-    // Disable interrupts in case one occurs while are writing...
-    //detachInterrupt(digitalPinToInterrupt(encoderA));
     Serial.print(millis(), DEC);
+    goodSpeed = 0;
     Serial.println(" R");
     digitalWrite (valvePin, HIGH);
     delay(valveTime);
     digitalWrite (valvePin, LOW);
-    tonePeriod = 50;
-    goodSpeed = 0;
     
-    //attachInterrupt(digitalPinToInterrupt(encoderA), doEncoder, CHANGE);
   }
-  // ...or reading
-  noInterrupts();
-  tonePeriod_ = tonePeriod;
-  interrupts();
-  // make a click
-  digitalWrite(speakerPin, HIGH);
-  delay(tonePeriod_);
 
-  digitalWrite(speakerPin, LOW);
-  delay(tonePeriod_);
+    digitalWrite (speakerPin, HIGH);
+  delay(clickDuration);
+      digitalWrite (speakerPin, LOW);
+      delay(interClickTime);
+
 }
